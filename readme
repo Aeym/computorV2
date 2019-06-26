@@ -1,0 +1,7 @@
+a checker les passage de tableau par reference, probablement pas necessaire
+
+rasssembler les fonctions echo
+
+rassembler les assignement dans GLOBALS dans une function
+
+tolower sur la chaine entree histoire de gerer la casse
