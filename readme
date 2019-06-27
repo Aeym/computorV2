@@ -4,4 +4,10 @@ rasssembler les fonctions echo
 
 rassembler les assignement dans GLOBALS dans une function
 
-tolower sur la chaine entree histoire de gerer la casse
+tolower sur la chaine entree histoire de gerer la casse DONE
+
+sur les fct verifier quil y a bien une seule variable
+
+sur le checkvar condition pour que les x soient ignores en passant le nom de la variable en param a la fct
+
+check si on a pas un ^ tout seul ou apres un operateur ou en debut de string et si yen a pas deux daffile

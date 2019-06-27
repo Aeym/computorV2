@@ -4,72 +4,8 @@ $tmpCalc = 0;
 // parseCalc(preg_replace("/\s+/", '', $argv[1]), $numbers, $operators);
 
 
-function parseBrakets($str) {
-    $i = 0;
-    $tmpi = 0;
-    $nbBrakets = 0;
-    $newStr = "";
-    while($i < strlen($str)) {
-        if($str[$i] == '(' ) {
-            $tmpi = $i;
-        }
-        if ($str[$i] == ')' && $nbBrakets == 0) {
-            $nbBrakets++;
-            echo substr($str, $tmpi + 1, $i - $tmpi - 1) . "\n";
-            parseCalc(substr($str, $tmpi + 1, $i - $tmpi - 1) . "\n");
-            if ($GLOBALS["tmpCalc"] != "error") {
-                $newStr = substr($str, 0, $tmpi) . $GLOBALS["tmpCalc"] . substr($str, $i + 1);
-            } else {
-                return;
-            }
-            // $newStr = str_replace($str, "", substr($str, $tmpi, $i - $tmpi + 1));
-            echo $newStr . "\n";
-        }
-        $i++;
-    }
-    if ($nbBrakets != 0) {
-        parseBrakets($newStr);
-    } else {
-        echo "on est la\n";
-        parseCalc($str);
-        echo "tada! \n";
-    }
-}
-
-
-function parseCalc($str) {
-    $numbers = array();
-    $operators = array();
-    if ($str[0] == '-' || $str[0] == '+') {
-        $str = "0" . $str;
-    }
-    $i = 0;
-    // $tmp = preg_split("/[\+\-\*\%]/", $argv[1]);
-    while($i < strlen($str)) {
-        if (strpos("-+*/%^", $str[$i]) !== false) {
-           array_push($operators, $str[$i]);
-        } else {
-            $j = $i;
-            while ($j < strlen($str)) {
-                if(strpos("-+*/%^", $str[$j]) === false) {
-                    $j++;
-                } else {
-                    break;
-                }
-            }
-            $length = $j - $i;
-            array_push($numbers, floatval(substr($str, $i, $length)));
-            $i += $length - 1;
-        }
-        $i++;
-    }
-    print_r($operators);
-    print_r($numbers);
-    calcPrio1($operators, $numbers);
-}
-
 function myPow($x, $pow) {
-    echo "POWWWW : " . $pow . "\n";
+    // echo "POWWWW : " . $pow . "\n";
     if($pow == 0){
         return 1;
     } else {
@@ -134,20 +70,20 @@ function calcPrio1(& $operators, & $numbers) {
         echo "Erreur division par 0\n";
         $GLOBALS["tmpCalc"] = "error";
     } else {
-        print_r($operators);
-        print_r($numbers);
+        // print_r($operators);
+        // print_r($numbers);
         $nbOpAfter = count($operators);
         if ($nbOpBefore != $nbOpAfter) {
-            echo "again!\n";
+            // echo "again!\n";
             calcPrio1($operators, $numbers);
         } else {
             if ($operators[count($operators) - 1] != '-' && $operators[count($operators) - 1] != '+') {
-                echo "last operators check\n";
+                // echo "last operators check\n";
                 array_push($operators, '+');
                 array_push($numbers, 0);
                 calcPrio1($operators, $numbers);
             } else {
-                echo "finito!\n";
+                // echo "finito!\n";
                 calcPrio2($operators, $numbers);
             }
         }
@@ -165,7 +101,7 @@ function calcPrio2($operators, $numbers) {
         }
         $i++;
     }
-    echo $result . "\n" ;
+    // echo $result . "\n" ;
     $GLOBALS["tmpCalc"] = $result;
 }
 
