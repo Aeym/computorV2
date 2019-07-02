@@ -45,7 +45,7 @@ function parse($line) {
     if (preg_match('/^[a-z]+$/i', $tmpArr[0]) == 1) {
         if ($tmpArr[0] == 'i') {
             $error = 1;
-            echo "Vous ne pouvez pas nommer une variable i (utilisé pour les complexes).\n";
+            echo "Vous ne pouvez pas nommer une variable 'i' (utilisé pour les complexes).\n";
         }
         assignVar($tmpArr);
     } else if (preg_match('/^[a-z]+\([a-z]+\)$/i', $tmpArr[0]) == 1) {
@@ -56,20 +56,22 @@ function parse($line) {
     return $error;
 }
 
-function checkVar($str) {
+function checkVar($str, $var) {
     preg_match_all('#[a-z]+#i', $str, $matches, PREG_OFFSET_CAPTURE);
-    // print_r($matches);
+    print_r($matches);
     $i = 0;
     $error = "none";
     while ($i < count($matches[0])) {
-        if ($matches[0][$i][0] != 'i'){
+        if ($matches[0][$i][0] != 'i' && $matches[0][$i][0] != $var){
             if (array_key_exists($matches[0][$i][0], $GLOBALS["arrVar"])) {
                 $tmpVal = $GLOBALS["arrVar"][$matches[0][$i][0]];
                 $str = str_replace($matches[0][$i][0], $tmpVal, $str);
             } else {
                 // retour error
                 $error = "yes";
-                $GLOBALS["error"] = "La variable " . $matches[0][$i][0] . " est inconnue.\n";
+                $GLOBALS["error"] .= "La variable " . $matches[0][$i][0] . " est inconnue.\n";
+                // echo "on est la\n";
+                // echo $GLOBALS["error"];
                 break;
             }
         }
@@ -103,14 +105,19 @@ function parseCalc($str) {
                 }
             }
             $length = $j - $i;
-            array_push($numbers, floatval(substr($str, $i, $length)));
+            $tmp = substr($str, $i, $length);
+            if($tmp == 'i') {
+                array_push($numbers, $tmp);
+            } else {
+                array_push($numbers, floatval($tmp));
+            }
             $i += $length - 1;
         }
         $i++;
     }
     // print_r($operators);
     // print_r($numbers);
-    calcPrio1($operators, $numbers);
+    calcPrio1($operators, $numbers, []);
 }
 
 function parseBrakets($str) {

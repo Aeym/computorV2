@@ -1,17 +1,23 @@
 <?php
 
 function assignVar($arr) {
-    $tmpStr = checkVar($arr[1]);
+    $tmpStr = checkVar($arr[1], '');
     // echo "remplacement des variables : " . $tmpStr . "\n\n";
     if ($tmpStr == "yes") {
         echo $GLOBALS["error"];
+        $GLOBALS["error"] = "";
         return;
     } else {
         parseBrakets($tmpStr);
     }
-    if ($GLOBALS["tmpCalc"] != "error") {
+    // echo "on test la valeur de tmpCalc : " . $GLOBALS["tmpCalc"] . "\n";
+    if ($GLOBALS["tmpCalc"] !== "error") {
+        // echo "on est dans l'assignation de la variable\n";
         $GLOBALS["arrVar"][$arr[0]] = $GLOBALS["tmpCalc"];
         echo $GLOBALS["arrVar"][$arr[0]] . "\n";
+    } else {
+        // echo "on est dans la gestion d'erreur\n";
+        echo $GLOBALS["tmpCalc"] . "\n";
     }
     // echo "Tableau des rationnels : \n";
     // print_r($GLOBALS["arrVar"]);
@@ -30,7 +36,34 @@ function assignMat() {
 
 function assignFct($arr) {
     echo "fct\n";
+    //verifie qu'on a bien une seule variable
+    checkFct($arr);
 
+}
+
+function checkFct($arr) {
+    $var = substr($arr[0], strpos($arr[0], '(') + 1, strpos($arr[0], ')') - strpos($arr[0], '(') - 1);
+    // echo $var . "\n";
+    $tmp = checkVar($arr[1], $var);
+    if ($tmp == "yes") {
+        // echo "error\n";
+        echo $GLOBALS["error"];
+        $GLOBALS["error"] = "";
+        return;
+    } else {
+        echo "assign fct\n";
+        if (strpos($arr[1], $var) !== FALSE) {
+            $GLOBALS["arrVar"][$arr[0]] = $tmp;
+        } else {
+            parseBrakets($tmp);
+            if ($GLOBALS["tmpCalc"] !== "error") {
+                $GLOBALS["arrVar"][$arr[0]] = $GLOBALS["tmpCalc"];
+                echo $GLOBALS["arrVar"][$arr[0]] . "\n";
+            }
+        }
+    }
+    
+    
 }
 
 function reduceFct($str) {
@@ -56,19 +89,19 @@ function reduceFct($str) {
     // }
     // print_r($tmpArr);
 }
+
+// 3^2-(3+x)^2+3+3x^0-x^0+3x
+// puissance   coeffs                      sign
+
+// 2           3    -> 3^2  = 9            +
+// 2           (3+  x) -> (3 + x)^2        -
+// none        3 -> 3                      +
+// 0           3x -> 3 * 1 = 3             +
+// 0           x -> 1                      -
+// none        3x                          +
+
+
+// 2           (3 + x) -> (3 + x)^2
+// none        3x 
+// none        16
 ?>
-
-3^2-(3+x)^2+3+3x^0-x^0+3x
-puissance   coeffs                      sign
-
-2           3    -> 3^2  = 9            +
-2           (3+  x) -> (3 + x)^2        -
-none        3 -> 3                      +
-0           3x -> 3 * 1 = 3             +
-0           x -> 1                      -
-none        3x                          +
-
-
-2           (3 + x) -> (3 + x)^2
-none        3x 
-none        16
