@@ -27,10 +27,10 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
     $i = 1;
     $error = 0;
     while ($i < count($operators)) {
-        if($operators[$i] == '^') {
-            $tmp = myPow($numbers[$i], $numbers[$i + 1]);
-            $numbers[$i] = $tmp;
-            unset($operators[$i], $numbers[$i + 1]);
+        if($operators[$i - 1] == '^') {
+            $tmp = myPow($numbers[$i - 1], $numbers[$i]);
+            $numbers[$i - 1] = $tmp;
+            unset($operators[$i - 1], $numbers[$i]);
             $tmp2 = array_values($numbers);
             $numbers = array();
             $numbers = $tmp2;

@@ -10,16 +10,16 @@ function check_entry($line) {
         $error = 1;
     }
     // check char type
-    if (!preg_match("#^[a-zA-Z0-9\[\]\(\)\+\-\/\%\*\^\=\. ]+$#", $line)) {
+    if (!preg_match("#^[a-zA-Z0-9\[\]\(\)\+\-\/\%\*\^\?\=\. ]+$#", $line)) {
         echo "Les noms de variables/fonctions doivent uniquement comporter des lettres\n";
-        echo "Les opérateurs gérés sont : +, -, *, /, %, ^\n";
+        echo "Les opérateurs gérés sont : +, -, *, /, %, ^, ainsi que ? pour connaitre le résultat d'un calcul.\n";
         $error = 1;
      }
      if (preg_match("#[a-z]+ +[a-z]+#i", $line)) {
          echo "Erreur de syntaxe\n";
          $error = 1;
      }
-     if (preg_match("#[\+\-\*\/\%\.][\+\-\*\/\%\.]#", $line)) {
+     if (preg_match("#[\+\-\*\/\%\.][\+\*\/\%\.]#", $line)) {
         echo "Erreur de syntaxe\n";
         $error = 1;
      }
@@ -34,30 +34,65 @@ function check_entry($line) {
 }
 
 function parse($line) {
-    $error = 0;
     $tmpStr = preg_replace("/\s+/", '', $line);
     $tmpArr = explode('=', $tmpStr);
     if ($tmpArr[0] == '' || $tmpArr[1] == '') {
-        $error = 1;
         echo "Erreur de syntaxe\n";
+        return 1;
     }
-    // on commence par faire les assignations de variables et de fonctions
-    if (preg_match('/^[a-z]+$/i', $tmpArr[0]) == 1) {
-        if ($tmpArr[0] == 'i') {
-            $error = 1;
-            echo "Vous ne pouvez pas nommer une variable 'i' (utilisé pour les complexes).\n";
+    // on check si on demande le resultat d'un calcul :
+    if (strpos($tmpArr[1], '?') !== FALSE) {
+        if (strlen($tmpArr[1]) == 1) {
+            if(($tmp = checkVar($tmpArr[0], '')) != "yes") {
+                parseBrakets(checkVar($tmpArr[0], ''));
+                echo $GLOBALS["tmpCalc"] . "\n";
+            } else {
+                echo "Erreur\n";
+            }
+        } else {
+            echo "Erreur, pour le résultat d'un calcul utilisez \"=?\" seul.\n";
+            return 1;
         }
-        assignVar($tmpArr);
-    } else if (preg_match('/^[a-z]+\([a-z]+\)$/i', $tmpArr[0]) == 1) {
-        assignFct($tmpArr);
     } else {
-        $error = 1;
+        // on commence par faire les assignations de variables et de fonctions
+        if (preg_match('/^[a-z]+$/i', $tmpArr[0]) == 1) {
+            if ($tmpArr[0] == 'i') {
+                $error = 1;
+                echo "Vous ne pouvez pas nommer une variable 'i' (utilisé pour les complexes).\n";
+            }
+            assignVar($tmpArr);
+        } else if (preg_match('/^[a-z]+\([a-z]+\)$/i', $tmpArr[0]) == 1) {
+            assignFct($tmpArr);
+        } else {
+            return 1;
+        }
     }
-    return $error;
+    return 0;
+}
+
+function imgFct($str) {
+    $var = substr($str, strpos($str, '(') + 1, strpos($str, ')') - strpos($str, '(') - 1);
+    echo "var de fn = " . $var . "\n";
+    $str = substr($str, 0, strpos($str, '('));
+    echo "str = " . $str . "\n";
+    foreach($GLOBALS["arrVar"] as $key => $value) {
+        if (strpos($key, '(') !== false) {
+            $tmp = substr($key, 0, strpos($key, '('));
+            echo "tmp = str = " . $tmp . "\n";
+            if ($str == $tmp) {
+                $tmpvar = substr($key, strpos($key, '(') + 1, strpos($key, ')') - strpos($key, '(') - 1);
+                $tmpcalc = $value;
+                $tmpcalc = str_replace($tmpvar, $var, $tmpcalc);
+                parseBrakets(checkVar($tmpcalc, ''));
+                return $GLOBALS["tmpCalc"];
+            }
+        }
+    }
+    return "error";
 }
 
 function checkVar($str, $var) {
-    preg_match_all('#[a-z]+#i', $str, $matches, PREG_OFFSET_CAPTURE);
+    preg_match_all('/[a-z]+\(?[0-9]?\.?[0-9]?\)?+/i', $str, $matches, PREG_OFFSET_CAPTURE);
     print_r($matches);
     $i = 0;
     $error = "none";
@@ -65,6 +100,8 @@ function checkVar($str, $var) {
         if ($matches[0][$i][0] != 'i' && $matches[0][$i][0] != $var){
             if (array_key_exists($matches[0][$i][0], $GLOBALS["arrVar"])) {
                 $tmpVal = $GLOBALS["arrVar"][$matches[0][$i][0]];
+                $str = str_replace($matches[0][$i][0], $tmpVal, $str);
+            } else if (($tmpVal = imgFct($matches[0][$i][0])) != "error") {
                 $str = str_replace($matches[0][$i][0], $tmpVal, $str);
             } else {
                 // retour error
@@ -87,6 +124,7 @@ function checkVar($str, $var) {
 function parseCalc($str) {
     $numbers = array();
     $operators = array();
+    $bool = 0;
     if ($str[0] == '-' || $str[0] == '+') {
         $str = "0" . $str;
     }
@@ -94,9 +132,17 @@ function parseCalc($str) {
     // $tmp = preg_split("/[\+\-\*\%]/", $argv[1]);
     while($i < strlen($str)) {
         if (strpos("-+*/%^", $str[$i]) !== false) {
-           array_push($operators, $str[$i]);
+            if (strpos("-+*/%^", $str[$i - 1]) === false) {
+                array_push($operators, $str[$i]);
+            } else {
+                $bool = 1;
+            }
         } else {
-            $j = $i;
+            if ($bool == 0) {
+                $j = $i;
+            } else {
+                $j = $i + 1;
+            }
             while ($j < strlen($str)) {
                 if(strpos("-+*/%^", $str[$j]) === false) {
                     $j++;
@@ -106,9 +152,14 @@ function parseCalc($str) {
             }
             $length = $j - $i;
             $tmp = substr($str, $i, $length);
+            echo "tmp = " .$tmp . "\n";
             if($tmp == 'i') {
                 array_push($numbers, $tmp);
             } else {
+                if ($bool == 1) {
+                    $tmp *= -1;
+                    $bool = 0;
+                }
                 array_push($numbers, floatval($tmp));
             }
             $i += $length - 1;

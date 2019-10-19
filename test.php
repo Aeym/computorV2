@@ -2,12 +2,30 @@
 
 // reduceFct($argv[1]);
 
+
+echo myPow($argv[1], $argv[2]) . "\n";
+
+function myPow($x, $pow) {
+    // echo "POWWWW : " . $pow . "\n";
+    if($pow == 0){
+        return 1;
+    } else {
+        $i = 1;
+        $tmpx = $x;
+        while ($i < $pow) {
+            $x *= $tmpx;
+            $i++;
+        }
+        return $x;
+    }
+}
+
 $tmpStr = preg_replace("/\s+/", '', $argv[1]);
 $tmpArr = explode('=', $tmpStr);
 
 // checkFct($tmpArr);
-$tmp= +5 +-2;
-echo $tmp;
+// $tmp= +5 +-2;
+// echo $tmp;
 
 function checkFct($arr) {
     print_r($arr);
