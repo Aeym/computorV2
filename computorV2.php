@@ -1,8 +1,9 @@
 <?php 
 
-require("./calcul.php");
-require("./parser.php");
-require("./assign.php");
+require_once("./calcul.php");
+require_once("./parser.php");
+require_once("./assign.php");
+require_once("./poly.php");
 
 $arrVar = array();
 $lines = array();

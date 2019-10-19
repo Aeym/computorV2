@@ -3,8 +3,10 @@
 // reduceFct($argv[1]);
 
 
-echo myPow($argv[1], $argv[2]) . "\n";
-
+// echo myPow($argv[1], $argv[2]) . "\n";
+$var = "salut";
+echo substr($var, 1, -1);
+// echo (preg_match("#" . $var. "[0-9]+#", $argv[1]));
 function myPow($x, $pow) {
     // echo "POWWWW : " . $pow . "\n";
     if($pow == 0){
