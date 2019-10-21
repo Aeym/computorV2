@@ -16,7 +16,7 @@ function assignVar($arr) {
         $GLOBALS["arrVar"][$arr[0]] = $GLOBALS["tmpCalc"];
         echo $GLOBALS["arrVar"][$arr[0]] . "\n";
     } else {
-        echo "on est dans la gestion d'erreur\n";
+        // echo "on est dans la gestion d'erreur\n";
         echo $GLOBALS["tmpCalc"] . "\n";
     }
 
@@ -26,6 +26,9 @@ function assignVar($arr) {
 
 function assignMat($arr) {
     // echo "mat\n";
+    if (preg_match('/^[a-z]+\([a-z]+\)$/i', $arr[0]) == 1) {
+        // function de matrices
+    }
     if (preg_match("/\*+/i", $arr[1])) {
         // echo "assign1\n";
         $arr[1] = calcMat($arr[1]);

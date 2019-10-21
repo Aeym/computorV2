@@ -42,11 +42,11 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
             $operators = $tmp3;
         }
         if (strpos("-+", $operators[$i]) !== false && strpos("*/%", $operators[$i - 1]) !== false) {
-            if ($numbers[$i - 1] != 'i' && $numbers[$i] != 'i'){
+            if ($numbers[$i - 1] !== 'i' && $numbers[$i] !== 'i'){
                 if ($operators[$i - 1] == '*') {
                     $tmp = $numbers[$i - 1] * $numbers[$i];
                 } else if ($operators[$i - 1] == '/') {
-                    if ($numbers[$i] != 0) {
+                    if ($numbers[$i] != '0') {
                         $tmp = $numbers[$i - 1] / $numbers[$i];
                     } else {
                         $error = 1;
@@ -59,8 +59,8 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
                     }
                 }
             } else { // gestion de la partie imaginaire quand on a un ou deux 'i'
-                echo "teeeeeest33\n"; 
-                if ($numbers[$i - 1] == 'i' && $numbers[$i] == 'i') {
+                if ($numbers[$i - 1] === 'i' && $numbers[$i] === 'i') {
+                    echo "teeeeeest33\n"; 
                     if ($operators[$i - 1] == '*') {
                         $tmp = -1;
                     } else if ($operators[$i - 1] == '/') {
@@ -69,7 +69,7 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
                         $tmp = 0;
                     }
                 }
-                else if ($numbers[$i - 1] == 'i' || $numbers[$i] == 'i') {
+                else {
                     if ($operators[$i - 1] == '*') {
                         $tmp = 0;
                         $sign = '' . ($i < 2) ? '+' : $operators[$i - 2];
@@ -77,14 +77,26 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
                         // print_r($imgPart);
                     } else if ($operators[$i - 1] == '/') {
                         $tmp = 0;
-                        $imgPart[] = $numbers[$i - 1] . '/' . $numbers[$i];
+                        if ($numbers[$i] != 0) {
+                            $imgPart[] = $numbers[$i - 1] . '/' . $numbers[$i];
+                        } else {
+                            $error = 1;
+                        }
                     } else if ($operators[$i - 1] == '%') {
                         if($numbers[$i - 1] == 'i') {
                             $tmp = 'i';
                         } else {
                             $tmp = 0;
                         }
-                    }
+                    } 
+                    // else if (strpos("+-", $operators[$i - 1]) !== false) {
+                    //     echo "new teeeest \n";
+                    //     if ($numbers[$i - 1] == 'i') {
+                    //         $tmp = $numbers[$i];
+                    //     } else {
+                    //         $tmp = $numbers[$i - 1];
+                    //     }
+                    // }
                 }
             }
             if ($error == 0) {
@@ -103,23 +115,23 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
         $i++;
     }
     if ($error == 1) {
-        echo "Erreur division par 0\n";
+        echo "Division par 0\n";
         $GLOBALS["tmpCalc"] = "error";
     } else {
         // print_r($operators);
         // print_r($numbers);
         $nbOpAfter = count($operators);
         if ($nbOpBefore != $nbOpAfter) {
-            // echo "again!\n";
+            echo "again!\n";
             calcPrio1($operators, $numbers, $imgPart);
         } else {
             if ($operators[count($operators) - 1] != '-' && $operators[count($operators) - 1] != '+') {
-                // echo "last operators check\n";
+                echo "last operators check\n";
                 array_push($operators, '+');
                 array_push($numbers, 0);
                 calcPrio1($operators, $numbers, $imgPart);
             } else {
-                // echo "finito!\n";
+                echo "finito!\n";
                 calcPrio2($operators, $numbers, $imgPart);
             }
         }
@@ -129,16 +141,30 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
 function calcPrio2($operators, $numbers, $imgPart) {
     print_r($imgPart);
     $i = 0;
-    $result = $numbers[0];
+    if ($numbers[0] != 'i')  {
+        $result = $numbers[0];
+    } else {
+        $result = 0;
+        $imgPart[] = "1";
+
+    }
     while ($i < count($operators)) {
         if ($operators[$i] == '-'){
-            $result -= $numbers[$i + 1];
+            if ($numbers[$i + 1] == 'i') {
+                $imgPart[] = "-1";
+            } else {
+                $result -= $numbers[$i + 1];
+            }
         } else {
-            $result += $numbers[$i + 1];
+            if ($numbers[$i + 1] == 'i') {
+                $imgPart[] = "1";
+            } else {
+                $result += $numbers[$i + 1];
+            }
         }
         $i++;
     }
-    // echo $result . " reslult\n" ;
+    echo $result . " reslult\n" ;
     if (count($imgPart) == 0) {
         $GLOBALS["tmpCalc"] = $result;
     } else {
@@ -160,7 +186,7 @@ function calcPrio2($operators, $numbers, $imgPart) {
     }
 }
 
-function reduceImgPart($imgPart) {
+function reduceImgPart($imgPart) {4
     $i = 0;
     $tmp = 0;
     while ($i < count($imgPart)) {
