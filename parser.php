@@ -1,7 +1,5 @@
 <?php 
 
-// check_entry($argv[1]);
-
 function check_entry($line) {
     $error = 0;
     // check nb of =
@@ -16,15 +14,19 @@ function check_entry($line) {
         $error = 1;
      }
      if (preg_match("#[a-z]+ +[a-z]+#i", $line)) {
-         echo "Erreur de syntaxe2\n";
+         echo "Erreur de syntaxe\n";
          $error = 1;
      }
-     if (preg_match("#[a-z][0-9]#i", $line)) {
-        echo "Erreur de syntaxe3\n";
+     if (preg_match("#[a-z]+[0-9]+#i", $line)) {
+        echo "Erreur char et chiffre collés\n";
+        $error = 1;
+    }
+    if (preg_match("#[0-9]+[a-z]+#i", $line)) {
+        echo "Erreur chiffre et char collés\n";
         $error = 1;
     }
      if (preg_match("#[\+\*\-\/\%\.][\+\/\%\.]+#", $line)) {
-        echo "Erreur de syntaxe1\n";
+        echo "Erreur de syntaxe\n";
         $error = 1;
      }
      if (substr_count($line, '[') != substr_count($line, ']')) {
@@ -47,7 +49,6 @@ function parse($line) {
     // on check si on a un polynome de degre <= 2
     if (preg_match("/[0-9\+\-\^\*\/\%]/", $tmpArr[0]) == 1 && preg_match("/[0-9\+\-\*\^\/\%]/", $tmpArr[1]) == 1) {
         preg_match_all("/[a-z]+/", $tmpStr, $matches, PREG_OFFSET_CAPTURE);
-        // print_r($matches);
         if (count($matches[0]) == 0) {
             echo "Erreur, pas de variables.\n";
             return 1;
@@ -57,16 +58,26 @@ function parse($line) {
     // on check si on demande le resultat d'un calcul :
      else if (strpos($tmpArr[1], '?') !== FALSE) {
         if (strlen($tmpArr[1]) == 1) {
+            $GLOBALS["info"] = 0;
+            $tmp = checkVar($tmpArr[0], '');
             if (preg_match("/\[+/", $tmpArr[0]) != 0) {
                 $ret = calcMat($tmpArr[0]);
                 echo $ret . "\n";
-            }
-             else if(($tmp = checkVar($tmpArr[0], '')) != "yes") {
+                return 0;
+            } else if($tmp != "ok" && $tmp != "yes") {
                  if ($tmp != "nope") {
-                     parseBrakets($tmp);
-                     echo $GLOBALS["tmpCalc"] . "\n";
-                 }
-            } else {
+                     if (preg_match("/\[/", $tmp)) {
+                         $ret = calcMat($tmp);
+                         echo $ret . "\n";
+                        } else {
+                            parseBrakets($tmp);
+                            echo $GLOBALS["tmpCalc"] . "\n";
+                            return 0;
+                        }
+                    }
+            } else if ($tmp == "ok") {
+                return 0;
+            } else  {
                 echo "Erreur\n";
                 return 1;
             }
@@ -77,7 +88,7 @@ function parse($line) {
     } else if (preg_match('/[\[\]]/i', $tmpArr[1]) == 1) {
         assignMat($tmpArr);
     } else {
-        // on commence par faire les assignations de variables et de fonctions
+        // assignations de variables et de fonctions
         if (preg_match('/^[a-z]+$/i', $tmpArr[0]) == 1) {
             if ($tmpArr[0] == 'i') {
                 $error = 1;
@@ -88,7 +99,7 @@ function parse($line) {
         } else if (preg_match('/^[a-z]+\([a-z]+\)$/i', $tmpArr[0]) == 1) {
             assignFct($tmpArr);
         } else {
-            echo "erreur de syntaxe5.\n";
+            echo "erreur de syntaxe.\n";
             return 1;
         }
     }
@@ -103,27 +114,21 @@ function checkPoly($arr, $matches, $str) {
             return 1;
         }
     }
-    // preg_match_all('/\^[0-9]+/i', $arr[0], $matchesbis, PREG_OFFSET_CAPTURE);
-    // print_r($matchesbis);
     parseArg($str, $tmp);
 }
 
 function imgFct($str) {
     $var = substr($str, strpos($str, '(') + 1, strpos($str, ')') - strpos($str, '(') - 1);
-    // echo "var de fn = " . $var . "\n";
     $str = substr($str, 0, strpos($str, '('));
-    // echo "str = " . $str . "\n";
     foreach($GLOBALS["arrVar"] as $key => $value) {
         if (strpos($key, '(') !== false) {
             $tmp = substr($key, 0, strpos($key, '('));
-            // echo "tmp = str = " . $tmp . "\n";
             $var2 = substr($str, strpos($str, '(') + 1, strpos($str, ')') - strpos($str, '(') - 1);
             if ($str == $tmp) {
                 $tmpvar = substr($key, strpos($key, '(') + 1, strpos($key, ')') - strpos($key, '(') - 1);
                 $tmpcalc = $value;
                 $tmpcalc = str_replace($tmpvar, $var, $tmpcalc);
-                parseBrakets(checkVar($tmpcalc, ''));
-                return $GLOBALS["tmpCalc"];
+                return checkVar($tmpcalc, '');
             }
         }
     }
@@ -131,36 +136,43 @@ function imgFct($str) {
 }
 
 function checkVar($str, $var) {
-    // echo $str . "\n";
     preg_match_all('/[a-z]+\(?[0-9]*[a-z]*\.?[0-9]*\)?+/i', $str, $matches, PREG_OFFSET_CAPTURE);
-    // print_r($matches);
     $i = 0;
     $error = "none";
     while ($i < count($matches[0])) {
         if ($matches[0][$i][0] != 'i' && $matches[0][$i][0] != $var){
             if (array_key_exists($matches[0][$i][0], $GLOBALS["arrVar"])) {
                 if (is_array($GLOBALS["arrVar"][$matches[0][$i][0]])) {
-                    $str = implodeArrMat($GLOBALS["arrVar"][$matches[0][$i][0]]);
-                    $GLOBALS["tmpCalc"] =  $str . "\n";
-                    break;
+                    $tmpVal = implodeArrMat($GLOBALS["arrVar"][$matches[0][$i][0]]);
+                    $str = str_replace($matches[0][$i][0], $tmpVal, $str);
                 }
                 if (strpos($matches[0][$i][0], "(") === false) {
                     $tmpVal = $GLOBALS["arrVar"][$matches[0][$i][0]];
                     $str = str_replace($matches[0][$i][0], $tmpVal, $str);
-                    // echo $str . "\n";
                 } else {
-                    echo "Erreur\n";
-                    $error = "yes";
+                    $var = substr($matches[0][$i][0], strpos($matches[0][$i][0], '(') + 1, strpos($matches[0][$i][0], ')') - strpos($matches[0][$i][0], '(') - 1);
+                    if (array_key_exists($var, $GLOBALS["arrVar"])) {
+                        $tmpVal = $GLOBALS["arrVar"][$var];
+                        $str = str_replace($var, $tmpVal, $str);
+                        return checkVar($str, '');
+                    }
+                    if (count($matches[0]) == 1 && $GLOBALS["info"] === 0) {
+                        echo  $GLOBALS["arrVar"][$matches[0][$i][0]] . "\n";
+                        unset($GLOBALS["info"]);
+                        return "ok";
+                    } else {
+                        $tmpVal = $GLOBALS["arrVar"][$matches[0][$i][0]];
+                        $str = str_replace($matches[0][$i][0], $tmpVal, $str);
+                        return checkVar($str, '');
+                    }
                 }
             } else if (($tmpVal = imgFct($matches[0][$i][0])) != "error") {
-                // echo "osdghldg\n";
                 $str = str_replace($matches[0][$i][0], $tmpVal, $str);
             } else {
                 // retour error
                 $error = "yes";
-                $GLOBALS["error"] .= "La variable " . $matches[0][$i][0] . " est inconnue.\n";
+                $GLOBALS["error"] = "La variable " . $matches[0][$i][0] . " est inconnue.\n";
                 echo $GLOBALS["error"];
-                // return;
             }
         }
         $i++;
@@ -180,7 +192,6 @@ function parseCalc($str) {
         $str = "0" . $str;
     }
     $i = 0;
-    // $tmp = preg_split("/[\+\-\*\%]/", $argv[1]);
     while($i < strlen($str)) {
         if (strpos("-+*/%^", $str[$i]) !== false) {
             if (strpos("-+*/%^", $str[$i - 1]) === false) {
@@ -203,7 +214,6 @@ function parseCalc($str) {
             }
             $length = $j - $i;
             $tmp = substr($str, $i, $length);
-            // echo "tmp = " .$tmp . "\n";
             if($tmp == 'i') {
                 array_push($numbers, $tmp);
             } else {
@@ -217,8 +227,6 @@ function parseCalc($str) {
         }
         $i++;
     }
-    // print_r($operators);
-    // print_r($numbers);
     calcPrio1($operators, $numbers, []);
 }
 
@@ -233,15 +241,13 @@ function parseBrakets($str) {
         }
         if ($str[$i] == ')' && $nbBrakets == 0) {
             $nbBrakets++;
-            // echo substr($str, $tmpi + 1, $i - $tmpi - 1) . "\n";
             parseCalc(substr($str, $tmpi + 1, $i - $tmpi - 1) . "\n");
-            if ($GLOBALS["tmpCalc"] != "error") {
+            if ($GLOBALS["tmpCalc"] !== "error") {
                 $newStr = substr($str, 0, $tmpi) . $GLOBALS["tmpCalc"] . substr($str, $i + 1);
             } else {
+                echo "erreur\n";
                 return;
             }
-            // $newStr = str_replace($str, "", substr($str, $tmpi, $i - $tmpi + 1));
-            // echo $newStr . "\n";
         }
         $i++;
     }
@@ -250,6 +256,77 @@ function parseBrakets($str) {
     } else {
         parseCalc($str);
     }
+}
+
+function implodeArrMat($arr) {
+    $str = "[";
+    foreach($arr as $rows) {
+        $tmp = '[' . implode(",", $rows) . '];';
+        $str .= $tmp;
+    }
+    $str = substr($str, 0, strlen($str) - 1);
+    $str .= ']';
+    return $str;
+}
+
+
+function check_and_parse_mat($str) {
+    $arr = array();
+    $ret = isole($str);
+    if ($ret == 1) {
+        return 1;
+    }
+    $mat = substr($str, $ret[0] + 1, $ret[1] - $ret[0] - 1);
+    $iopen = 0;
+    $iclose = 0;
+    for($i = 0; $i < strlen($mat); $i++) {
+        if ($mat[$i] == '[') {
+            $iopen++;
+        } else if ($mat[$i] == ']') {
+            $iclose++;
+        }
+        if ($iclose > $iopen) {
+            return 1;
+        }
+    }
+    if ($iclose != $iopen) {
+        return 1;
+    }
+
+    $matRows = explode(';', $mat);
+    $c = 0;
+    foreach ($matRows as $row) {
+        if ($row[0] != '[' || $row[strlen($row) - 1] != ']') {
+            return 1;
+        }
+        $tmp = explode(',', substr($row, 1, strlen($row) - 2));
+        if($c == 0) {
+            $c = count($tmp);
+        } else {
+            if ($c != count($tmp)) {
+                return 1;
+            }
+        }
+        $arr[] = $tmp;
+    }
+    return $arr;
+}
+
+function isole($str) {
+    $ifirstopen = -1;
+    $ilastclose = -1;
+    for ($i = 0; $i < strlen($str); $i++) {
+        if ($str[$i] == '[' && $ifirstopen == -1) {
+            $ifirstopen = $i;
+        } 
+        if ($str[$i] == ']') {
+            $ilastclose = $i;
+        }
+    }
+    if ($ifirstopen > $ilastclose) {
+        return 1;
+    }
+    return array($ifirstopen, $ilastclose);
 }
 
 ?>

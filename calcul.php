@@ -1,11 +1,6 @@
 <?php 
-// $tmpCalc = 0;
-// parseBrakets(preg_replace("/\s+/", '', $argv[1]));
-// parseCalc(preg_replace("/\s+/", '', $argv[1]), $numbers, $operators);
-
 
 function myPow($x, $pow) {
-    // echo "POWWWW : " . $pow . "\n";
     if ($x == 'i') {
         return -1;
     }
@@ -24,9 +19,6 @@ function myPow($x, $pow) {
 
 function calcPrio1(& $operators, & $numbers, $imgPart) {
     $nbOpBefore = count($operators);
-    // echo "BITE\n";
-    print_r($operators);
-    print_r($numbers);
     $i = 1;
     $error = 0;
     while ($i < count($operators)) {
@@ -60,7 +52,6 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
                 }
             } else { // gestion de la partie imaginaire quand on a un ou deux 'i'
                 if ($numbers[$i - 1] === 'i' && $numbers[$i] === 'i') {
-                    echo "teeeeeest33\n"; 
                     if ($operators[$i - 1] == '*') {
                         $tmp = -1;
                     } else if ($operators[$i - 1] == '/') {
@@ -71,14 +62,25 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
                 }
                 else {
                     if ($operators[$i - 1] == '*') {
-                        $tmp = 0;
                         $sign = '' . ($i < 2) ? '+' : $operators[$i - 2];
-                        $imgPart[] = $sign . $numbers[$i - 1] . '*' . $numbers[$i];
-                        // print_r($imgPart);
+                        if ($sign === '*' || $sign === '%' || $sign === '/') {
+                            $tmp = 'i';
+                        } else {
+                            $tmp = 0;
+                        }
+                        if ($numbers[$i] === 'i') {
+                            $imgPart[] = $sign === '-' ? '-' : '+' . $numbers[$i - 1];
+                        } else {
+                            $imgPart[] = $sign === '-' ? '-' : '+' . $numbers[$i];
+                        }
                     } else if ($operators[$i - 1] == '/') {
                         $tmp = 0;
-                        if ($numbers[$i] != 0) {
-                            $imgPart[] = $numbers[$i - 1] . '/' . $numbers[$i];
+                        if ($numbers[$i] !== (float)0) {
+                            if ($numbers[$i] === 'i') {
+                                $imgPart[] = (-1) * $numbers[$i - 1];
+                            } else {
+                                $imgPart[] = 1 / $numbers[$i];
+                            }
                         } else {
                             $error = 1;
                         }
@@ -89,14 +91,6 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
                             $tmp = 0;
                         }
                     } 
-                    // else if (strpos("+-", $operators[$i - 1]) !== false) {
-                    //     echo "new teeeest \n";
-                    //     if ($numbers[$i - 1] == 'i') {
-                    //         $tmp = $numbers[$i];
-                    //     } else {
-                    //         $tmp = $numbers[$i - 1];
-                    //     }
-                    // }
                 }
             }
             if ($error == 0) {
@@ -118,20 +112,15 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
         echo "Division par 0\n";
         $GLOBALS["tmpCalc"] = "error";
     } else {
-        // print_r($operators);
-        // print_r($numbers);
         $nbOpAfter = count($operators);
         if ($nbOpBefore != $nbOpAfter) {
-            echo "again!\n";
             calcPrio1($operators, $numbers, $imgPart);
         } else {
             if ($operators[count($operators) - 1] != '-' && $operators[count($operators) - 1] != '+') {
-                echo "last operators check\n";
                 array_push($operators, '+');
                 array_push($numbers, 0);
                 calcPrio1($operators, $numbers, $imgPart);
             } else {
-                echo "finito!\n";
                 calcPrio2($operators, $numbers, $imgPart);
             }
         }
@@ -139,9 +128,8 @@ function calcPrio1(& $operators, & $numbers, $imgPart) {
 }
 
 function calcPrio2($operators, $numbers, $imgPart) {
-    print_r($imgPart);
     $i = 0;
-    if ($numbers[0] != 'i')  {
+    if ($numbers[0] !== 'i')  {
         $result = $numbers[0];
     } else {
         $result = 0;
@@ -150,13 +138,13 @@ function calcPrio2($operators, $numbers, $imgPart) {
     }
     while ($i < count($operators)) {
         if ($operators[$i] == '-'){
-            if ($numbers[$i + 1] == 'i') {
+            if ($numbers[$i + 1] === 'i') {
                 $imgPart[] = "-1";
             } else {
                 $result -= $numbers[$i + 1];
             }
         } else {
-            if ($numbers[$i + 1] == 'i') {
+            if ($numbers[$i + 1] === 'i') {
                 $imgPart[] = "1";
             } else {
                 $result += $numbers[$i + 1];
@@ -164,16 +152,9 @@ function calcPrio2($operators, $numbers, $imgPart) {
         }
         $i++;
     }
-    echo $result . " reslult\n" ;
     if (count($imgPart) == 0) {
         $GLOBALS["tmpCalc"] = $result;
     } else {
-        // $i = 0;
-        // $tmp = '';
-        // while ($i < count($imgPart)) {
-        //     $tmp .= $imgPart[$i];
-        //     $i++;
-        // }
         $tmp = reduceImgPart($imgPart);
         $tmp .= "*i";
         if ($result > 0) {
@@ -186,7 +167,7 @@ function calcPrio2($operators, $numbers, $imgPart) {
     }
 }
 
-function reduceImgPart($imgPart) {4
+function reduceImgPart($imgPart) {
     $i = 0;
     $tmp = 0;
     while ($i < count($imgPart)) {
@@ -210,24 +191,15 @@ function calcMat($str) {
                         return 1;
                     } else {
                         $ret = multiMat($tmp1, $tmp2);
-                        // echo "laa\n";
-                        // print_r($ret);
-                        // $str = str_replace($arr[$j] . "**" . $arr[$j * 1], implodeArrMat($ret), $str);
+                        $str = str_replace($arr[$j] . "**" . $arr[$j * 1], implodeArrMat($ret), $str);
                         $j += 2;
                     }
                 }
             } else {
                 $tmp1 = check_and_parse_mat($arr[$j]);
                 $tmp2 = check_and_parse_mat($arr[$j + 1]);
-                // print_r($tmp1);
-                // print_r($tmp2);
-                // return;
                 if (strpos($arr[$j], "[") === false || strpos($arr[$j + 1], '[') === false) {
                     // scalaire
-                    // echo "1\n";
-                    // print_r($arr[$j]);
-                    // echo "2\n";
-                    // print_r($arr[$j + 1]);
                     if (strpos($arr[$j], "[") !== false) {
                         $ret = scalMat($tmp1, $arr[$j + 1]);
 
@@ -239,17 +211,12 @@ function calcMat($str) {
                         echo "Erreur scalaire inconnu.\n";
                         return 1;
                     }
-                    // echo "3\n";
-                    // print_r($ret);
                     $str = str_replace($arr[$j] . "*" . $arr[$j + 1], implodeArrMat($ret), $str);
                     $j += 2;
                 } else {
                     //terme a terme
-                    // echo "ouret\n";
                     if (count($tmp1) == count($tmp2) && count($tmp1[0]) == count($tmp2[0])) {
-                        echo "ouret2\n";
                         $ret = tatMat($tmp1, $tmp2);
-                        print_r($ret);
                         $str = str_replace($arr[$j] . "*" . $arr[$j + 1], implodeArrMat($ret), $str);
                         $j += 2;
                     } else {
@@ -268,8 +235,6 @@ function calcMat($str) {
 }
 
 function tatMat($mat1, $mat2) {
-    // echo "la\n";
-    // print_r($mat1);
     $x = 0;
     $newmat = array();
     while ($x < count($mat1)) {
@@ -284,12 +249,9 @@ function tatMat($mat1, $mat2) {
 }
 
 function scalMat($mat, $scl) {
-    // echo "scl =  " . $scl . "\n";
    if (preg_match("/[a-z]+/i", $scl) != 0) {
         $ret = checkVar($scl, "");
-        // echo $ret . "\n";
         if ($ret == "yes") {
-            // echo "slutuu\n";
             return 1;
        } else {
            $scl = $ret;
@@ -327,7 +289,6 @@ function multiMat($mat1, $mat2) {
             $cont--;
         }
         $x++;
-        print_r($newmat);
     }
     return $newmat;
 }

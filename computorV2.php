@@ -7,7 +7,6 @@ require_once("./poly.php");
 
 $arrVar = array();
 $lines = array();
-// fwrite(STDIN, "vara = 2");
 
 while (1) {
     $line = strtolower(stream_get_line(STDIN, 1024, PHP_EOL));
@@ -23,6 +22,5 @@ while (1) {
         }
     }
 }
-
 
 ?>

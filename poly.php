@@ -8,13 +8,11 @@ function parseArg($str, $var) {
     print_r($testArr);
     for ($i = 0; $i < count($testArr); $i++) {
         if (strpos($testArr[$i], $var) === false) {
-            // $tmpStr = str_replace($testArr[$i], $testArr[$i] . "*" . $var . "^0", $tmpStr);
             $testArr[$i] .= "*" . $var . "^0";
         } else {
             $tmp = strpos($testArr[$i], $var);
             $tmp2 = preg_split("#" . $var . "#", $testArr[$i]);
             if ($testArr[$i][$tmp + strlen($var)] != "^") {
-                // $tmpStr = str_replace($testArr[$i], $tmp2[0] . $var . "^1" . $tmp2[1], $tmpStr);
                 if ($testArr[$i] == $var) {
                     $testArr[$i] = "1*" . $tmp2[0] . $var . "^1" . $tmp2[1]; 
                 } else {
@@ -23,9 +21,6 @@ function parseArg($str, $var) {
             }
         }
     }
-    // $str = implode('', $testArr);
-    // echo $tmpStr ."\n";
-    print_r($testArr);
     $j = 0;
     $strfinal = "";
     for ($i = 0; $i < strlen($tmpStr); $i++) {
@@ -35,15 +30,11 @@ function parseArg($str, $var) {
         }
     }
     $strfinal .= $testArr[$j] . $tmpStr[$i];
-    echo "final str = " . $strfinal ."\n";
     $tmpArr = explode('=', $strfinal);
 
     $left = preg_split("#" . $var . "\^#", $tmpArr[0], 0, PREG_SPLIT_NO_EMPTY);
     $right = preg_split("#" . $var . "\^#", $tmpArr[1], 0, PREG_SPLIT_NO_EMPTY);
 
-
-    print_r($left);
-    print_r($right);
     $leftCoeff = array();
     $rightCoeff = array();
 
@@ -166,8 +157,6 @@ function solution($coeffs, $polyDegree) {
         $result .= "The polynomial degree is stricly greater than 2, I can't solve.\n";
     }
     echo $result;
-
-
 }
 
 
