@@ -2,10 +2,7 @@
 
 function parseArg($str, $var) {
     $tmpStr = preg_replace("/\s+/", '', $str);
-    
-    
     $testArr = preg_split("/[\+\-\=\/\%]/", $tmpStr);
-    print_r($testArr);
     for ($i = 0; $i < count($testArr); $i++) {
         if (strpos($testArr[$i], $var) === false) {
             $testArr[$i] .= "*" . $var . "^0";
@@ -67,12 +64,24 @@ function parseArg($str, $var) {
 }
 
 function reduceEqu($leftCoeff, $rightCoeff, $var) {
-    print_r($leftCoeff);
-    print_r($rightCoeff);
     $coeffs = array();
-    $c = (count($leftCoeff) > count($rightCoeff)) ? count($leftCoeff) : count($rightCoeff);
+    $c = 0;
     $i = 0;
-    while ($i < $c) {
+
+    foreach ($leftCoeff as $key => $value) {
+        $tmp = intval(substr($key, -1));
+        if ($tmp > $c) {
+            $c = $tmp;
+        }
+    }
+    foreach ($rightCoeff as $key => $value) {
+        $tmp = intval(substr($key, -1));
+        if ($tmp > $c) {
+            $c = $tmp;
+        }
+    } 
+
+    while ($i <= $c) {
         $l = 0;
         $r = 0;
         if (array_key_exists('pow' . $i, $leftCoeff)) {
@@ -157,6 +166,7 @@ function solution($coeffs, $polyDegree) {
         $result .= "The polynomial degree is stricly greater than 2, I can't solve.\n";
     }
     echo $result;
+
 }
 
 
